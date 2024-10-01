@@ -3,7 +3,12 @@ import asyncio
 import logging
 
 from config import load_config
-from handlers import router
+
+from handlers.starting import router
+from handlers.commands import cmd_router
+from handlers.messages import msg_router
+
+from db.database import init_db
 
 
 # Настройка логирования
@@ -22,7 +27,10 @@ dp = Dispatcher()
 
 # Создание асинхронной функции работы бота
 async def main():
+    await init_db()
     dp.include_router(router)
+    dp.include_router(cmd_router)
+    dp.include_router(msg_router)
     await dp.start_polling(bot)
 
 # Запуск бота
