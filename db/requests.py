@@ -47,3 +47,18 @@ async def get_user_language(session: AsyncSession, tg_id: int) -> str | None:
     except Exception as e:
         logger.error(f'Ошибка при получении языка пользователя: {e}')
         return 'ru'
+
+
+# Функция для получения языка пользователя
+async def get_username(session: AsyncSession, tg_id: int) -> str | None:
+    try:
+        result = await session.execute(
+            select(User.name).where(User.tg_id == tg_id)
+        )
+        return result.scalars().first()
+    except NoResultFound:
+        logger.error(f'Имя пользователя: {tg_id} не найдено')
+        return 'unknown'
+    except Exception as e:
+        logger.error(f'Ошибка при получении имени пользователя: {e}')
+        return 'unknown'
