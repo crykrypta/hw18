@@ -37,11 +37,21 @@ AsyncSessionLocal = sessionmaker(  # type: ignore
 async def get_session():
     async with AsyncSessionLocal() as session:
         logger.info("Session created")
-        yield session
+        try:
+            yield session  # Передаем сессию для использования
+        except Exception as e:
+            logger.error(f"Ошибка во время операции с сессией: {str(e)}")
+            await session.rollback()  # Откат в случае ошибки
+        finally:
+            await session.close()  # Закрываем сессию после использования
 
 
+# Инициализация базы данных
 async def init_db():
-    async with engine.begin() as conn:
-        logger.info("Creating tables...")
-        await conn.run_sync(Base.metadata.create_all)
-        logger.info("Tables created")
+    try:
+        async with engine.begin() as conn:
+            logger.info("Creating tables...")
+            await conn.run_sync(Base.metadata.create_all)
+            logger.info("Tables created!")
+    except Exception as e:
+        logger.error(f"Error during table creation: {str(e)}")

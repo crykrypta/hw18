@@ -4,11 +4,11 @@ from aiogram import Router, F
 from aiogram.types import Message
 
 from db.database import get_session
-from db.requests import get_user_language
-
-from app.routing import query_with_username
+from db.requests import get_user_language, get_username
 
 from lexicon import lexicon
+
+from app.requests import fetch_model_answer
 
 
 # Логирование
@@ -26,20 +26,27 @@ msg_router = Router()
 @msg_router.message(F.text)
 async def any_text(message: Message):
     logger.info('Даем запрос в базу данных по <username>')
+    generating_msg = await message.answer(
+        text='Генерация ответа..'
+    )
+
+    # Получаем имя пользователя
     async for session in get_session():
-        username = await get_user_language(
+        username = await get_username(
             session, message.from_user.id
         )
 
-    logger.info('Даем запрос к модели..')
-
     # Получение ответа от модели
-    await message.answer(
-        text=query_with_username(
-            topic=message.text,
-            username=username
-        )
+    logger.info('Даем запрос к модели..')  # LOG
+    answer = await fetch_model_answer(
+        {'topic': message.text, 'username': username}
     )
+    if answer:  # Проверяем коректность ответа
+        logger.info('Ответ получен')
+        await generating_msg.edit_text(text=answer['content'])
+    else:       # Ответ не корректен
+        logger.error('Ответ не получен')
+        await generating_msg.edit_text(text='Ошибка при генерации ответа')
 
 
 # Ответ на голосовые сообщения

@@ -31,6 +31,7 @@ async def main():
     dp.include_router(router)
     dp.include_router(cmd_router)
     dp.include_router(msg_router)
+
     await dp.start_polling(bot)
 
 # Запуск бота

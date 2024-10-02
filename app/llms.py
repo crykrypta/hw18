@@ -1,8 +1,6 @@
 import openai
 from openai import AsyncOpenAI
 
-import aiohttp
-
 from config import load_config
 
 # Загрузка конфигурации
@@ -20,7 +18,6 @@ class SimpleLLM:
         model (str, optional) = 'gpt-3.5-turbo'.
         system (str | None) = None.
         temperature (float, optional) = 0.0.
-        
         returns:
             str: ответ LLM
         """

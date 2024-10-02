@@ -12,7 +12,7 @@ llm = SimpleLLM(
 
 
 # Маршрут для получения ответа от ChatGPT
-@app.get("/gpt/query")
+@app.post("/gpt/query")
 async def query_with_username(query: Query):
     response = await llm.get_answer(query.topic, query.username)
-    return {"response": response}
+    return {"content": response}
