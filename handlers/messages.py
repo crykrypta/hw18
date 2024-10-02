@@ -6,6 +6,8 @@ from aiogram.types import Message
 from db.database import get_session
 from db.requests import get_user_language
 
+from app.routing import query_with_username
+
 from lexicon import lexicon
 
 
@@ -23,12 +25,20 @@ msg_router = Router()
 # Ответ на Любые текстовые сообщения
 @msg_router.message(F.text)
 async def any_text(message: Message):
+    logger.info('Даем запрос в базу данных по <username>')
     async for session in get_session():
-        language = await get_user_language(
+        username = await get_user_language(
             session, message.from_user.id
         )
+
+    logger.info('Даем запрос к модели..')
+
+    # Получение ответа от модели
     await message.answer(
-        text=lexicon[language]['text']['any_text']
+        text=query_with_username(
+            topic=message.text,
+            username=username
+        )
     )
 
 
