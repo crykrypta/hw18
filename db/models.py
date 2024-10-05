@@ -1,19 +1,42 @@
-from sqlalchemy import BigInteger, String
-from sqlalchemy.orm import mapped_column, Mapped
+from datetime import datetime
+from typing import List
+
+from sqlalchemy import Integer, BigInteger, String, DateTime, ForeignKey
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.database import Base
+from logs import LogConfig
+
+logger = LogConfig.setup_logging()
 
 
-# Модель пользователя
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    name: Mapped[str] = mapped_column(String(32))
-    language: Mapped[str] = mapped_column(String(16))
+    name: Mapped[str] = mapped_column(String(100), default='unknown')
+    language: Mapped[str] = mapped_column(String(10), default='ru')
+    request_count: Mapped[int] = mapped_column(Integer, default=0)
 
-    def __repr__(self):
-        return (f"<User(id={self.id},  \
-                username={self.username}, \
-                lexicon={self.email})>")
+    last_request_date: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow)
+
+    # Отношение с DialogContext
+    dialog_contexts: Mapped[List["DialogContext"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan")
+
+
+class DialogContext(Base):
+    __tablename__ = "dialog_contexts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    message: Mapped[str] = mapped_column(String)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow)
+
+    # Отношения с User
+    user: Mapped["User"] = relationship(
+        back_populates="dialog_contexts")

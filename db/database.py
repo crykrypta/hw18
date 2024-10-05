@@ -1,17 +1,11 @@
-import logging
-
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 
 from config import load_config
+from logs import LogConfig
 
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(levelname)s '
-                    '%(name)s - %(message)s ')
-
-logger = logging.getLogger(__name__)
+logger = LogConfig.setup_logging()
 
 # Получение конфигурации
 config = load_config()
