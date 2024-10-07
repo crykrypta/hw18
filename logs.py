@@ -32,10 +32,19 @@ class LogConfig:
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
 
+        # Handler для STDOUT
         ch = logging.StreamHandler()
         ch.setFormatter(CustomFormatter())
-        root_logger.addHandler(ch)
 
+        # Handler для записи в logfile.log
+        fh = logging.FileHandler('logfile.log', 'w', encoding='utf-8')
+        fh.setFormatter(CustomFormatter())
+
+        # Добавляем оба Handler's
+        root_logger.addHandler(ch)
+        root_logger()
+
+        # Отключаем логирование от sqlalchemy и aiogram
         logging.getLogger('sqlalchemy.engine.Engine').disabled = True
         logging.getLogger('aiogram').setLevel(logging.WARNING)
 

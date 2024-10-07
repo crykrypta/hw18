@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import List
 
@@ -5,9 +6,8 @@ from sqlalchemy import Integer, BigInteger, String, DateTime, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from db.database import Base
-from logs import LogConfig
 
-logger = LogConfig.setup_logging()
+logger = logging.getLogger(__name__)
 
 
 class User(Base):

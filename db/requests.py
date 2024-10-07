@@ -10,9 +10,9 @@ from db.models import User, DialogContext
 
 from handlers import utils
 
-from logs import LogConfig
+import logging
 
-logger = LogConfig.setup_logging()
+logger = logging.getLogger(__name__)
 
 
 # Функция для получения обьекта User
@@ -164,3 +164,21 @@ async def add_dialog_context(
             await session.delete(context)
 
     await session.commit()
+
+
+async def handle_user_request(session, user, max_requests) -> List[str] | str:
+    # Увеличиваем счетчик запросов пользователя
+    await increment_user_request_count(session=session, user_id=user.id)
+    # Проверяем количество запросов пользователя
+    if user.request_count > max_requests:
+        return "Превышено максимальное количество запросов"
+    # Получаем контекст диалога пользователя
+    logger.info('ПОЛУЧАЕМ КОНТЕКСТ ДИАЛОГА')
+    context = await session.scalars(
+        select(DialogContext.context)
+        .where(DialogContext.user_id == user.id)
+        .order_by(DialogContext.timestamp.desc())
+    )
+    logger.info(f'КОНТЕКСТ ДИАЛОГА ПОЛУЧЕН: {context}')
+    await session.commit()
+    return context

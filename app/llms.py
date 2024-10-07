@@ -1,3 +1,6 @@
+import logging
+from typing import List
+
 import openai
 from openai import AsyncOpenAI
 
@@ -6,6 +9,9 @@ from config import load_config
 # Загрузка конфигурации
 config = load_config()
 openai.api_key = config.openai_key
+
+
+logger = logging.getLogger(__name__)
 
 
 # Класс для работы с LLM
@@ -28,30 +34,47 @@ class SimpleLLM:
 
         # Определяем необходимость Default System Prompt
         if system is None:
-            self.system = '''Ты - нейроконсультант,
-            пользователь взаимодействует с тобой через Telegram\n
-            Обращайся к пользователю по имени\n
-            Вопросы будут подаваться в формате:
-            Имя пользователя: <usename>\n
-            Вопрос: <question>\n
-            '''
+            self.system = 'Ты - нейроконсультант, пользователь ' \
+                          'взаимодействует с тобой через Telegram\n' \
+                          'Если контекст диалога не пустой, не привествуй пользователя' # noqa
+
         else:
             self.system = system
 
     # Функция получения ответа от ChatGPT
-    async def get_answer(self, topic: str, username: str) -> str | None:
+    async def get_answer(self,
+                         topic: str,
+                         username: str,
+                         dialog_context: List[str]) -> str | None:
         """
         query (str): Вопрос пользователя
         username (str): Имя пользователя
+        dialog_context (List[str]): История диалога
         """
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            temperature=self.temperature,
-            messages=[
-                {'role': 'system', 'content': self.system},
-                {'role': 'user',
-                    'content': f'Имя пользователя: {username}\n'
-                               f'Вопрос пользователя: {topic}'}
-            ]
-        )
+        logger.warning(f"Получен запрос от пользователя {username} с вопросом: {topic}" # noqa
+                       f'=======================КОНТЕКСТ ДИАЛОГА: {dialog_context}') # noqa
+        try:
+            user_message = f"name: {username}\ncurrent question: {topic}" \
+                        f"context_dialog: {';'.join(dialog_context)}"
+        except Exception as e:
+            logger.error(f'Ошибка при формировании сообщения пользователя: {e}') # noqa
+            return None
+
+        logger.info(f'СООБЩЕНИЕ СФОРМИРОВАНО: {user_message}')
+
+        logger.info(f"ОТПРАВКА ЗАПРОСА к ChatGPT с ВОПРОСОМ: {topic}"
+                    f"и контекстом: {dialog_context}")
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                temperature=self.temperature,
+                messages=[
+                    {'role': 'system', 'content': self.system},
+                    {'role': 'user', 'content': user_message}
+                ]
+            )
+        except Exception as e:
+            logger.error(f'Ошибка при получении ответа от ChatGPT: {e}')
+            return None
+
         return response.choices[0].message.content

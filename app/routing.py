@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+import logging
 
+from fastapi import FastAPI
 from app.models import Query
 from app.llms import SimpleLLM
 
+# Инициализация логгера
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 llm = SimpleLLM(
@@ -14,5 +17,9 @@ llm = SimpleLLM(
 # Маршрут для получения ответа от ChatGPT
 @app.post("/gpt/query")
 async def query_with_username(query: Query):
-    response = await llm.get_answer(query.topic, query.username)
+    response = await llm.get_answer(
+        topic=query.topic,
+        username=query.username,
+        dialog_context=query.dialog
+    )
     return {"content": response}
