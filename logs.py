@@ -7,8 +7,9 @@ class CustomFormatter(logging.Formatter):
     RED = "\x1b[31;20m"
     BOLD_RED = "\x1b[31;1m"
     RESET = "\x1b[0m"
-    FORMAT = "%(asctime)s - %(name)s - # %(levelname)-8s - %(message)s | (%(filename)s:%(lineno)d)" # noqa
 
+    DATEFMORMAT = "%m-%d %H:%M:%S"
+    FORMAT = "[%(asctime)s.%(msecs)02d] - %(module)10s:%(lineno)3d %(levelname)-7s - %(message)s" # noqa
     FORMATS = {
         logging.DEBUG: GREY + FORMAT + RESET,
         logging.INFO: GREY + FORMAT + RESET,
@@ -19,7 +20,7 @@ class CustomFormatter(logging.Formatter):
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = logging.Formatter(log_fmt, datefmt=self.DATEFMORMAT)
         return formatter.format(record)
 
 
@@ -30,7 +31,7 @@ class LogConfig:
     @staticmethod
     def setup_logging():
         root_logger = logging.getLogger()
-        root_logger.setLevel(logging.INFO)
+        root_logger.setLevel(logging.DEBUG)
 
         # Handler для STDOUT
         ch = logging.StreamHandler()
@@ -42,7 +43,7 @@ class LogConfig:
 
         # Добавляем оба Handler's
         root_logger.addHandler(ch)
-        root_logger()
+        root_logger.addHandler(fh)
 
         # Отключаем логирование от sqlalchemy и aiogram
         logging.getLogger('sqlalchemy.engine.Engine').disabled = True
