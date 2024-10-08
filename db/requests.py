@@ -57,14 +57,18 @@ async def set_user_language(session: AsyncSession,
                             tg_id: int,
                             language: str):
     try:
+        # Логируем обновление языка пользователя
+        logger.info('Обновляем язык пользователя tg_id: %d на %s', tg_id, repr(language)) # noqa
         await session.execute(
-            update(User).where(User.tg_id == tg_id).values(language=language)
+            update(User)
+            .where(User.tg_id == tg_id)
+            .values(language=language)
         )
         await session.commit()
-        await session.refresh(User)
-        logger.info(f"Язык пользователя {tg_id} успешно обновлен на {language}") # noqa
+
+        logger.info('Обновление языка пользователя tg_id: %d - Успешно!', tg_id) # noqa
     except Exception as e:
-        logger.error(f'Ошибка при установке языка пользователя: {e}')
+        logger.error('Ошибка при установке языка пользователя: %s', e)
 
 
 # Функция для увеличения счетчика запросов пользователя
