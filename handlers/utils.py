@@ -5,6 +5,7 @@ def message_and_requests(message: str,
     Args:
         message (str): Ответ модели
         request_count (int): Количество запросов
+        limit (int): Лимит запросов
     Returns:
         Осталось запросов: {request_count}\n\n{message}
     """

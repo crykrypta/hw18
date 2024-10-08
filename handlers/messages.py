@@ -14,6 +14,9 @@ from db.requests import (increment_user_request_count,
                          add_dialog_context)
 
 from app.requests import ChatGPTClient
+
+from states import Chat
+
 from handlers import utils
 
 import logging
@@ -28,7 +31,7 @@ max_requests = 5
 
 
 # Ответ на Любые текстовые сообщения
-@msg_router.message(F.text)
+@msg_router.message(Chat.active, F.text)
 async def any_text(message: Message):
     logger.info('Даем запрос в базу данных по <username>')
     generating_msg = await message.answer(
