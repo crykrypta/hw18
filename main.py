@@ -9,6 +9,8 @@ from handlers.callbacks import cb_router
 
 from db.database import init_db
 
+from aiogram.fsm.storage.redis import RedisStorage, Redis  # NEW
+
 from logs import LogConfig
 
 logger = LogConfig.setup_logging()
@@ -17,9 +19,12 @@ logger = LogConfig.setup_logging()
 # Загрузка конфигурации
 config = load_config()
 
+redis = Redis(host=config.redis_host)  # NEW
+storage = RedisStorage(redis=redis)  # NEW
+
 # Создание бота и диспетчера
 bot = Bot(token=config.tg_token)
-dp = Dispatcher()
+dp = Dispatcher(storage=storage)  # NEW
 
 
 # Создание асинхронной функции работы бота
