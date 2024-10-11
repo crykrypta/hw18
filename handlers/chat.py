@@ -12,7 +12,8 @@ from db.database import get_session
 from db.requests import (increment_user_request_count,
                          get_user_by_tg_id,
                          get_user_dialog_context,
-                         add_dialog_context)
+                         add_dialog_context,
+                         handle_user_requests_limit)
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 # Создание роутера
 msg_router = Router()
 
-max_requests = 5
+MAX_REQUESTS_PER_DAY = 5
 
 
 # Ответ на Любые текстовые сообщения
@@ -43,15 +44,30 @@ async def chat_process(message: Message, state: FSMContext):
 
     # Даем запроса в Базу данных
     async for session in get_session():
-        logger.info('Даем запрос в базу данных..')
+        logger.info('Получаем обьект user..')
         user: User = await get_user_by_tg_id(
             session=session,
             tg_id=message.from_user.id
         )
         if user:
-            # Увеличиваем счетчик запросов пользователя
-            await increment_user_request_count(session=session,
-                                               user_id=user.id)
+            logger.info('Обьект user получен (SUCCESS)')
+
+            try:  # Получаем количество запросов пользователя и увеличиваем его на 1  # noqa
+                await increment_user_request_count(
+                    session=session,
+                    user_id=user.id
+                )
+            except Exception as e:
+                logger.error('Ошибка при увеличении счетчика запросов %s', e)
+
+            # Пользователь исчерпал лимит запросов
+            if await handle_user_requests_limit(
+                user=user,
+                state=state,
+                generating_msg=generating_msg,
+                rq_limit=MAX_REQUESTS_PER_DAY
+            ):
+                return  # STOP
 
             try:  # Получаем контекст диалога пользователя
                 logger.info('Получаем контекст диалога...')

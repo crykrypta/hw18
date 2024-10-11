@@ -10,6 +10,7 @@ from db.requests import (get_user_by_tg_id, create_user)
 
 from lexicon import lexicon
 from keyboards import choose_lang_keyboard
+from keyboards import KeyboardFactory
 
 import logging
 
@@ -35,8 +36,7 @@ async def cmd_start(message: Message, state: FSMContext):
     # И отправляем пользователю клавиатуру для выбора языка
     logger.info('Установлено состояние Form.language')
     await message.answer(
-        text=('Привет! Выбери удобный для тебя язык\n'
-              'Hi! Choose a language you like'),
+        text=(lexicon['none']['choose_lang']),
         reply_markup=choose_lang_keyboard)
 
 
@@ -45,7 +45,20 @@ async def cmd_start(message: Message, state: FSMContext):
 async def cmd_help(message: Message):
     async for session in get_session():
         user = await get_user_by_tg_id(session, message.from_user.id)
-        language = user.laguage
+        language = user.language
+
+    # Создаем клавиатуру
+    try:
+        kb = KeyboardFactory(language)
+        keyboard = kb.create_keyboard(
+            [['to_main', 'ch_lang']]
+        )
+    except Exception as e:
+        logger.error(f'Error while creating keyboard: {e}')
+        keyboard = None
+
     await message.answer(
-        text=lexicon[language]["help"]
+        text=lexicon[language]['commands']["help"],
+        reply_markup=keyboard,
+        parse_mode='HTML'
     )
