@@ -4,7 +4,7 @@ import asyncio
 from config import load_config
 
 from handlers.commands import cmd_router
-from handlers.messages import msg_router
+from handlers.chat import msg_router
 from handlers.callbacks import cb_router
 
 from db.database import init_db
