@@ -66,7 +66,7 @@ async def process_reset_requests(callback: CallbackQuery, state: FSMContext):
         except Exception as e:  # Если ошибка, откатываем транзакцию
             logger.error('Error while reseting User.requests_count: %s', str(e)) # noqa
             await session.rollback()
-
+        
         await callback.message.edit_text(
                     text=lexicon[user.language]['actions']['reset_requests'],
                     reply_markup=reset_requests_keyboard(user.language)
