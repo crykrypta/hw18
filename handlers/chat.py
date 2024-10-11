@@ -61,12 +61,13 @@ async def chat_process(message: Message, state: FSMContext):
                 logger.error('Ошибка при увеличении счетчика запросов %s', e)
 
             # Пользователь исчерпал лимит запросов
-            if await handle_user_requests_limit(
+            limit_reached = await handle_user_requests_limit(
                 user=user,
                 state=state,
                 generating_msg=generating_msg,
                 rq_limit=MAX_REQUESTS_PER_DAY
-            ):
+            )
+            if limit_reached:
                 return  # STOP
 
             try:  # Получаем контекст диалога пользователя
