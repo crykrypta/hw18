@@ -51,19 +51,22 @@ class SimpleLLM:
         username (str): Имя пользователя
         dialog_context (List[str]): История диалога
         """
-        logger.warning(f"Получен запрос от пользователя {username} с вопросом: {topic}" # noqa
-                       f'=======================КОНТЕКСТ ДИАЛОГА: {dialog_context}') # noqa
+        logger.info('Running method - get_answer..')
+        # logger.info('topic: {0}'.format(topic))
+        # logger.info('username: {0}'.format(username))
+        # logger.info('dialog_context: {0}'.format(*dialog_context))
+
         try:
-            user_message = f"name: {username}\ncurrent question: {topic}" \
-                        f"context_dialog: {';'.join(dialog_context)}"
+            user_message = 'Имя пользователя: {0}\n Контекст диалога: {1}\nОтветь на вопрос: {2}'.format( # noqa
+                username, dialog_context, topic
+            )
+            logger.info('Message has been formed (SUCCESS) ')
         except Exception as e:
             logger.error(f'Ошибка при формировании сообщения пользователя: {e}') # noqa
             return None
 
-        logger.info(f'СООБЩЕНИЕ СФОРМИРОВАНО: {user_message}')
+        logger.info('Sending request to ChatGPT: {0}'.format(user_message))
 
-        logger.info(f"ОТПРАВКА ЗАПРОСА к ChatGPT с ВОПРОСОМ: {topic}"
-                    f"и контекстом: {dialog_context}")
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -73,6 +76,7 @@ class SimpleLLM:
                     {'role': 'user', 'content': user_message}
                 ]
             )
+            logger.info('Response has been received (SUCCESS)')
         except Exception as e:
             logger.error(f'Ошибка при получении ответа от ChatGPT: {e}')
             return None

@@ -48,6 +48,7 @@ class ChatGPTClient:
         """Закрыть сессию при завершении работы."""
         if not self.session.closed:
             await self.session.close()
+            logger.info('Session closed')
 
     def build_json_payload(self,
                            topic: str,
@@ -58,6 +59,7 @@ class ChatGPTClient:
             topic (str) - вопрос пользователя
             username (str) - имя пользователя
             dialog (List[str]) - последние 5 сообщений диалога"""
+        logger.info("Формирование JSON-данных для запроса..")
         return {
             'topic': topic,
             'username': username,
@@ -77,9 +79,7 @@ class ChatGPTClient:
         returns:
             answer (dict) - ответ от ChatGPT"""
         try:
-            logger.info("ОТПРАВКА ЗАПРОСА К CHATGPT\n\n")
-            logger.info(
-                f"Отправляемый JSON: {self.build_json_payload(topic, username, dialog)}") # noqa
+            logger.info("Отправляем запрос к API..(./gpt/query)")
 
             # Выполняем асинхронный POST запрос
             async with self.session.post(
