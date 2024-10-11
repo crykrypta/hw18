@@ -6,16 +6,11 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Redis:
-    host: str
-
-
-@dataclass
 class Config:
     tg_token: str
     db_url: str
     openai_key: str
-    redis: Redis = Redis(host='localhost')
+    redis_host: str
 
 
 def load_config() -> Config:
@@ -25,7 +20,7 @@ def load_config() -> Config:
     return Config(tg_token=env.str('TG_API_KEY'),
                   db_url=env.str('DATABASE_URL'),
                   openai_key=env.str('OPENAI_API_KEY'),
-                  redis=Redis(host=env.str('REDIS_HOST')))
+                  redis_host=env.str('REDIS_HOST'))
 
 
 logger.info('Configuration loaded!')
