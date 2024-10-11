@@ -3,15 +3,15 @@ lexicon = {
     'ru': {
         'commands': {
             'start': 'Добро пожаловать, мой дорогой друг!',
-            'help': 'Этот бот предназначен для обучения\n'
-            'Принимает три вида сообщений:\n'
-            '1. Текстовые сообщения\n'
-            '2. Фото\n'
-            '3. Голосовые сообщения',
+            'help': 'Это тестовый бот для доступа к <b>ChatGPT</b>\n'
+                    '- Хранит информацию о пользователях в <b>PostgreSQL</b>\n'
+                    '- Считает количество запросов пользователя за сутки\n'
+                    '- Каждые новые сутки счетчик сбрасывается\n',
         },
         'text': {
             'any_text': 'Текстовое сообщение получено!',
             'welcome': 'Добро пожаловать!',
+            'main_menu': 'Главное меню',
         },
         'buttons': {
             'help': 'Помощь',
@@ -19,6 +19,7 @@ lexicon = {
             'reset_requests': 'Сбросить запросы',
             'start_chat': 'Начать чат',
             'stop_chat': 'Выход',
+            'to_main': 'Главное меню'
         },
         'types': {
             'voice': 'Голосовое сообщение получено!',
@@ -32,21 +33,22 @@ lexicon = {
             'reset_requests': 'Запросы сброшены',
             'chat_start': 'Чат запущен!',
             'chat_stop': 'Чат остановлен',
+            'ch_lang': 'Смена языка',
         }
     },
     # Лексикон на английском языке
     'eng': {
-        'command': {
+        'commands': {
             'start': 'Welcome, my dear friend!',
-            'help': 'This bot is designed for training\n'
-            'Accepts three types of messages:\n'
-            '1. Text messages\n'
-            '2. Photos\n'
-            '3. Voice messages',
+            'help': 'This is a test bot for accessing <b>ChatGPT</b>\n'
+                    '- Stores information about the user in <b>PostgreSQL</b>\n' # noqa
+                    '- Counts the number of user requests per day\n'
+                    '- Every new day the counter is reset\n',
         },
         'text': {
             'any_text': 'We’ve received a message from you!',
             'welcome': 'Hello! Here is the list of available commands:',
+            'main_menu': 'Main menu',
         },
         'buttons': {
             'help': 'Help',
@@ -54,6 +56,7 @@ lexicon = {
             'reset_requests': 'Reset requests',
             'start_chat': 'Start Chat',
             'stop_chat': 'Exit',
+            'to_main': 'Main menu'
         },
         'types': {
             'voice': 'We’ve received a voice message from you!',
@@ -62,11 +65,16 @@ lexicon = {
         'error': {
             'user_not_found': 'User not found, enter the command /start',
             'limit': 'Request limit exceeded, but you can buy more',
+            'requests_limit': 'Request limit exceeded, but you can buy more',
         },
         'actions': {
             'reset_requests': 'Requests reseted',
             'chat_start': 'Chat started, just start typing!', # noqa
             'chat_stop': 'Chat stopped',
+            'ch_lang': 'Choosing language',
         }
+    },
+    'none': {
+        'choose_lang': 'Выберите язык / Choose language',
     }
 }

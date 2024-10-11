@@ -1,3 +1,5 @@
+import logging
+
 from typing import List
 from datetime import datetime, timedelta
 
@@ -6,17 +8,24 @@ from sqlalchemy import func, update
 from sqlalchemy.future import select
 from sqlalchemy.exc import NoResultFound
 
+from keyboards import requests_limit_keyboard
+
 from db.models import User, DialogContext
 
 from handlers import utils
+from states import Chat
+from lexicon import lexicon
 
-import logging
+
+from exc import UserRequestError, RequestsLimitError
+
 
 logger = logging.getLogger(__name__)
 
 
 # Функция для получения обьекта User
 async def get_user_by_tg_id(session: AsyncSession, tg_id: int) -> User | None:
+    logger.debug('Getting user by tg_id: %d', tg_id)
     try:
         result = await session.execute(
             select(User).where(User.tg_id == tg_id)
@@ -74,11 +83,10 @@ async def set_user_language(session: AsyncSession,
 # Функция для увеличения счетчика запросов пользователя
 async def increment_user_request_count(session: AsyncSession, user_id: int):
     user = await session.get(User, user_id)
+    if user:  # Если пользователь найден
+        current_time = datetime.utcnow()  # Получаем текущее время
 
-    if user:  # Проверка наличия пользователя
-        current_time = datetime.utcnow()
-
-        # Если прошло больше 24 часов, сбросить счетчик запросов
+        # Если прошло больше 24 часов с последнего запроса - сбросить счетчик запросов  # noqa
         if (current_time - user.last_request_date) >= timedelta(days=1):
             user.request_count = 1
         else:  # Если нет - то увеличить на 1
@@ -86,15 +94,16 @@ async def increment_user_request_count(session: AsyncSession, user_id: int):
 
         # Обновить дату последнего запроса
         user.last_request_date = datetime.utcnow()
+
         await session.commit()
         await session.refresh(user)
         return user.request_count
     else:
-        logger.error(f'Пользователь {user_id} не найден')
-        return None
+        logger.error('Пользователь %s не найден', user_id)
+        raise UserRequestError('Пользователь %s не найден', user_id)
 
 
-# Функция для увеличения счетчика запросов пользователя
+# Сброс запросов пользователя
 async def reset_user_request_count(session: AsyncSession, user_id: int):
     user = await session.get(User, user_id)
     if user:
@@ -170,19 +179,81 @@ async def add_dialog_context(
     await session.commit()
 
 
-async def handle_user_request(session, user, max_requests) -> List[str] | str:
+async def handle_user_request(session, user, max_requests) -> List[str] | str | None: # noqa
     # Увеличиваем счетчик запросов пользователя
-    await increment_user_request_count(session=session, user_id=user.id)
+    try:
+        await increment_user_request_count(session=session, user_id=user.id)
+        logger.info('Счетчик запросов увеличен')
+    except Exception as e:
+        logger.error('Ошибка при увеличении счетчика запросов: %s', e)
+        raise UserRequestError('Ошибка при увеличении счетчика запросов')
+
     # Проверяем количество запросов пользователя
     if user.request_count > max_requests:
-        return "Превышено максимальное количество запросов"
-    # Получаем контекст диалога пользователя
-    logger.info('ПОЛУЧАЕМ КОНТЕКСТ ДИАЛОГА')
-    context = await session.scalars(
-        select(DialogContext.context)
-        .where(DialogContext.user_id == user.id)
-        .order_by(DialogContext.timestamp.desc())
-    )
-    logger.info(f'КОНТЕКСТ ДИАЛОГА ПОЛУЧЕН: {context}')
-    await session.commit()
-    return context
+        logger.warning('Превышено максимальное количество запросов для user: %d', user.id) # noqa
+        raise RequestsLimitError('Превышено максимальное количество запросов')
+
+    try:  # Получаем контекст диалога пользователя
+        logger.info('Получаем контекст диалога...')
+        context = await session.scalars(
+            select(DialogContext.context)
+            .where(DialogContext.user_id == user.id)
+            .order_by(DialogContext.timestamp.desc())
+        )
+        await session.commit()
+        return context
+        logger.info('Dialog context received (SUCESS)')
+
+    except Exception as e:
+        logger.error('Ошибка при получении контекста диалога: %s', e)
+        raise UserRequestError('Ошибка при получении контекста диалога')
+
+
+async def set_chat_state(state, state_value):
+    """Изменяет состояние state на state_value + логирует
+    Args:
+        state (FSMContext): state: FSMContext текущего обработчика
+        state_value (State()): Конечное состояние"""
+
+    try:
+        await state.set_state(state_value)
+    except Exception as e:
+        logger.error('Ошибка при установке состояния: %s', e)
+
+
+async def send_limit_exceeded_message(user, generating_msg) -> None:
+    """Функция отправки сообщения о том, что лимит запросов исчерпан
+
+    Args:
+        user (User): Обьект пользователя User
+        generating_msg (message): Редактируемое сообщение
+    """
+    try:
+        await generating_msg.edit_text(
+            text=lexicon[user.language]['error']['requests_limit'],
+            reply_markup=requests_limit_keyboard(user.language)
+        )
+        logger.warning('Отправлено сообщение о превышении лимита запросов')
+    except Exception as e:
+        logger.error('Ошибка при отправке сообщения пользователю: %s', e)
+
+
+async def handle_user_requests_limit(user, state, generating_msg, rq_limit):
+    """Логика, при исчерпывании лимита запросов
+
+    Args:
+        user (User): обьект SQLAlchemyORM о пользователе
+        state (FSMContext): Текущее состояние контекста
+
+        generating_msg (Message): Изменяемое сообщение
+        rq_limit (int): Суточный лимит запросов для текущего пользователя
+
+    Returns:
+        bool
+    """
+    if user.request_count > rq_limit:
+        logger.warning('Превышено количество запросов пользователя: %s', user.id) # noqa
+        await set_chat_state(state, Chat.requests_limit)
+        await send_limit_exceeded_message(user, generating_msg)
+        return True
+    return False

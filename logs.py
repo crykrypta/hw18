@@ -9,7 +9,7 @@ class CustomFormatter(logging.Formatter):
     RESET = "\x1b[0m"
 
     DATEFMORMAT = "%m-%d %H:%M:%S"
-    FORMAT = "[%(asctime)s.%(msecs)02d] - %(module)10s:%(lineno)3d %(levelname)-7s - %(message)s" # noqa
+    FORMAT = "[%(asctime)s.%(msecs)03d] - %(module)10s:%(lineno)3d %(levelname)-7s - %(message)s" # noqa
     FORMATS = {
         logging.DEBUG: GREY + FORMAT + RESET,
         logging.INFO: GREY + FORMAT + RESET,
