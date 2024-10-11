@@ -7,3 +7,4 @@ class Form(StatesGroup):
 
 class Chat(StatesGroup):
     active = State()
+    requests_limit = State()
