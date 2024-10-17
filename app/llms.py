@@ -4,7 +4,7 @@ from typing import List
 import openai
 from openai import AsyncOpenAI
 
-from config import load_config
+from common.config import load_config
 
 # Загрузка конфигурации
 config = load_config()
