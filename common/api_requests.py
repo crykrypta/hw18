@@ -72,28 +72,3 @@ class ChatGPTClient:
         except aiohttp.ClientError as e:
             logger.error(f"Request failed: {str(e)}")
             return None
-
-
-# # !!! (EXPIRED) !!!
-# # Отдельная функция для работы с API
-# async def fetch_model_answer(topic: str,
-#                              username: str,
-#                              dialog: List[str]):
-#     """Формирует JSON, отправляет запрос к ChatGPT,
-#     args:
-#         topic (str) - текст сообщения
-#         username (str) - имя пользователя
-#     """
-#     json_data = {
-#         'topic': topic,
-#         'username': username,
-
-#     }
-#     async with aiohttp.ClientSession() as session:
-#         url = 'http://127.0.0.1:5000/gpt/query'
-#         async with session.post(url=url, json=json_data) as response:
-#             if response.status == 200:
-#                 return await response.json()
-#             else:
-#                 logger.error(f"API Error: {response.status}")
-#                 return None
