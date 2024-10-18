@@ -1,9 +1,10 @@
 services:
 
-  fastapi:
+  app:
     build:
       context: .
       dockerfile: app/Dockerfile
+    image: h18_fastapi:0.0.1
     container_name: fastapi_app
     ports:
       - 5001:5000
@@ -20,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: bot/Dockerfile
+    image: h18_bot:0.0.1
     container_name: telegram_bot
     environment:
       - DATABASE_URL=postgresql+asyncpg://${PG_USER}:${PG_PASSWORD}@db:5432/${PG_DB}
