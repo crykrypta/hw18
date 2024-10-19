@@ -16,6 +16,7 @@ class Config:
     tg_token: str
     db_url: str
     openai_key: str
+    proxy: str
     redis: RedisConfig
 
 
@@ -26,6 +27,7 @@ def load_config() -> Config:
     return Config(tg_token=env.str('TG_API_KEY'),
                   db_url=env.str('DATABASE_URL'),
                   openai_key=env.str('OPENAI_API_KEY'),
+                  proxy=env.str('PROXY'),
                   redis=RedisConfig(host=env.str('REDIS_HOST'),
                                     port=env.int('REDIS_PORT')))
 
