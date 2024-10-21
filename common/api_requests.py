@@ -15,6 +15,7 @@ class ChatGPTClient:
             base_url (str): 127.0.0.1:port
             session (ClientSession): aiohttp сессия
         """
+        logger.info('Инициализирован клиент %s', __name__)
         self.base_url = base_url
         self.session = session or aiohttp.ClientSession()
 
@@ -54,8 +55,6 @@ class ChatGPTClient:
         returns:
             answer (dict) - ответ от ChatGPT"""
         try:
-            logger.info("Отправляем запрос к API..(./gpt/query)")
-
             # Выполняем асинхронный POST запрос
             async with self.session.post(
                 url=f'{self.base_url}/gpt/query',  # 127.0.0.1:5000/gpt/query
@@ -63,12 +62,14 @@ class ChatGPTClient:
             ) as response:
 
                 if response.status == 200:
-                    logger.info("ОТВЕТ 200 ПОЛУЧЕН")
+                    logger.info("Код ответа 200 (SUCCESS!)")
                     return await response.json()
                 else:
                     logger.error(f"ОШИБКА ЗАПРОСА API Error: {response.status}") # noqa
                     return None
 
         except aiohttp.ClientError as e:
-            logger.error(f"Request failed: {str(e)}")
+            logger.error('Ошибка запроса: %s', e)
             return None
+        except Exception as e:
+            logger.error('Произошла ошибка: %s', e)

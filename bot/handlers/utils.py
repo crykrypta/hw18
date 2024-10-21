@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger()
+
+
 def message_and_requests(message: str,
                          request_count: int,
                          limit: int = 5) -> str:
@@ -20,6 +25,7 @@ def fabric_context_message(user: str, model: str) -> str:
     Returns:
         user: {user}\nmodel: {model}
     """
+    logger.info('Собираем контекст в строку..')
     return f'user: {user}\nmodel: {model}'
 
 

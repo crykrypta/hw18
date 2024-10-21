@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, update
 from sqlalchemy.future import select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
 from bot.keyboards import requests_limit_keyboard
 
@@ -81,6 +81,90 @@ async def set_user_language(session: AsyncSession,
         logger.error('Ошибка при установке языка пользователя: %s', e)
 
 
+# ------------------------ DIALOG CONTEXT ----------------------------- #
+
+# Получить актуальный контекст диалога для пользователя
+async def get_user_dialog_context(session: AsyncSession,
+                                  user_id: int) -> List[str]:
+    logger.info('getting user..')
+    user = await session.get(User, user_id)
+    if not user:
+        return []
+
+    logger.info('getting user\'s context..')
+    try:
+        contexts = await session.scalars(
+            select(DialogContext)
+            .where(DialogContext.user_id == user.id)
+            .order_by(DialogContext.timestamp.desc())
+            .limit(5)
+        )
+        return [context.message for context in contexts.all()]
+
+    except Exception as e:
+        logger.error('Произошла ошибка при попытке получить контекст диалога: %s', e) # noqa
+
+
+# Функция для добавления контекста диалога
+async def add_dialog_context(
+        session: AsyncSession,
+        user_id: int,
+        user_message: str,
+        model_message: str) -> None:
+    """Добавляет контекст диалога в базу данных
+
+    Args:
+        session (AsyncSession): Текущая сессия
+        user_id (int): ID пользователя
+        user_message (str): сообщение от пользователя
+        model_message (str): сообщение от модели
+    """
+    logger.info('Запрос в БД: Получаем обьект User..')
+    user = await session.get(User, user_id)
+    if not user:
+        logger.warning(f"Пользователь с id {user_id} не найден.")
+        return None
+
+    # Собираем в строку контекст диалога с помощью кастомной утилиты
+    context = utils.fabric_context_message(user_message, model_message)
+
+    # Создаем обьект ORM DialogContext
+    logger.debug('Создаем обьект ORM DialogContext..')
+    new_context = DialogContext(user_id=user.id, message=context)
+
+    session.add(new_context)
+
+    logger.debug('Получаем контекст диалога..')
+    # Удаляем старые контексты, если их больше 5
+    try:
+        context_count = await session.scalar(
+            select(func.count()).select_from(DialogContext)
+            .where(DialogContext.user_id == user.id)
+        )
+    except SQLAlchemyError as e:
+        logger.error('Ошибка при получении контекста диалога: %s', e)
+
+    if context_count is not None and context_count > 5:
+        logger.debug('Удаляем излишки контекста диалога..')
+        try:
+            oldest_contexts = await session.scalars(
+                select(DialogContext)
+                .where(DialogContext.user_id == user.id)
+                .order_by(DialogContext.timestamp)
+                .limit(context_count - 5)
+            )
+            for context in oldest_contexts:
+                await session.delete(context)
+        except SQLAlchemyError as e:
+            logger.error('Ошибка при удалении части контекста диалога: %s', e)
+
+    await session.commit()
+    logger.info('Завершение функции (DONE)')
+
+
+# ------------------------- HANDLE REQUESTS -------------------------- #
+
+
 # Функция для увеличения счетчика запросов пользователя
 async def increment_user_request_count(session: AsyncSession, user_id: int):
     user = await session.get(User, user_id)
@@ -117,67 +201,6 @@ async def reset_user_request_count(session: AsyncSession, user_id: int):
         await session.refresh(user)
     else:
         logger.error(f'Пользователь {user_id} не найден')
-
-
-# Получить актуальный контекст диалога для пользователя
-async def get_user_dialog_context(
-        session: AsyncSession,
-        user_id: int) -> List[str]:
-    user = await session.get(User, user_id)
-    if not user:
-        return []
-
-    contexts = await session.scalars(
-        select(DialogContext)
-        .where(DialogContext.user_id == user.id)
-        .order_by(DialogContext.timestamp.desc())
-        .limit(5)
-    )
-    return [context.message for context in contexts.all()]
-
-
-# Функция для добавления контекста диалога
-async def add_dialog_context(
-        session: AsyncSession,
-        user_id: int,
-        user_message: str,
-        model_message: str) -> None:
-    """Добавляет контекст диалога в базу данных
-
-    Args:
-        session (AsyncSession): Текущая сессия
-        user_id (int): ID пользователя
-        user_message (str): сообщение от пользователя
-        model_message (str): сообщение от модели
-    """
-    user = await session.get(User, user_id)
-    if not user:
-        logger.warning(f"Пользователь с id {user_id} не найден.")
-        return None
-
-    # Собираем в строку контекст диалога с помощью кастомной утилиты
-    context = utils.fabric_context_message(user_message, model_message)
-
-    new_context = DialogContext(user_id=user.id, message=context)
-
-    session.add(new_context)
-
-    # Удаляем старые контексты, если их больше 5
-    context_count = await session.scalar(
-        select(func.count()).select_from(DialogContext)
-        .where(DialogContext.user_id == user.id)
-    )
-    if context_count is not None and context_count > 5:
-        oldest_contexts = await session.scalars(
-            select(DialogContext)
-            .where(DialogContext.user_id == user.id)
-            .order_by(DialogContext.timestamp)
-            .limit(context_count - 5)
-        )
-        for context in oldest_contexts:
-            await session.delete(context)
-
-    await session.commit()
 
 
 async def handle_user_request(session, user, max_requests) -> List[str] | str | None: # noqa

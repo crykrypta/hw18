@@ -17,6 +17,7 @@ class Config:
     db_url: str
     openai_key: str
     proxy: str
+    fastapi_url: str
     redis: RedisConfig
 
 
@@ -28,6 +29,7 @@ def load_config() -> Config:
                   db_url=env.str('DATABASE_URL'),
                   openai_key=env.str('OPENAI_API_KEY'),
                   proxy=env.str('PROXY'),
+                  fastapi_url=env.str('FASTAPI_URL'),
                   redis=RedisConfig(host=env.str('REDIS_HOST'),
                                     port=env.int('REDIS_PORT')))
 

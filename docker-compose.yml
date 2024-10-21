@@ -14,8 +14,12 @@ services:
       - TG_API_KEY=${TG_API_KEY}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - PROXY=http://MA5GuHbj:KQffUJ3n@185.209.50.79:62600
+      - FASTAPI_URL=http://0.0.0.0:5000
     depends_on:
       - db
+    networks:
+      - app-net
 
   bot:
     build:
@@ -29,8 +33,12 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - PROXY=http://MA5GuHbj:KQffUJ3n@185.209.50.79:62600
+      - FASTAPI_URL=http://fastapi_app:5000
     depends_on:
       - db
+    networks:
+      - app-net
 
   db:
     image: postgres:latest
@@ -41,10 +49,18 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - PROXY=http://MA5GuHbj:KQffUJ3n@185.209.50.79:62600
+      - FASTAPI_URL=http://fastapi_app:5000
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
 
 volumes:
   postgres_data:

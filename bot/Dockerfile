@@ -5,6 +5,7 @@ WORKDIR /app
 COPY ./bot ./bot
 COPY ./common ./common
 
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r ./bot/requirements.txt
 
 ENTRYPOINT ["python3", "-m", "bot.main"]
