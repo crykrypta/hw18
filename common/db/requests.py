@@ -276,7 +276,7 @@ async def handle_user_requests_limit(session, user, state, generating_msg, rq_li
         bool
     """
 
-    if user.request_count > rq_limit:
+    if user.request_count >= rq_limit:
         logger.warning('Превышено количество запросов пользователя: %s', user.id) # noqa
         await set_chat_state(state, Chat.requests_limit)
         await send_limit_exceeded_message(user, generating_msg)
