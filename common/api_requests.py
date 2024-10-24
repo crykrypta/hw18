@@ -82,12 +82,14 @@ class LLMSClient:
 
         try:
             logger.info('Начало работы функции fetch_model_answer')
-            # Выполняем асинхронный POST запрос
-            async with self.session.post(
-                url=f'{self.base_url}/sber/gigachat/query',
-                json=self.build_json_payload(topic, username, dialog)
-            ) as response:
 
+            payload = self.build_json_payload(topic, username, dialog)
+            logger.debug('payload: %s', payload)
+
+            url = f'{self.base_url}/sber/gigachat/query'
+            logger.debug('url: %s', url)
+
+            async with self.session.post(url=url, json=payload) as response:
                 if response.status == 200:
                     logger.info("FastAPI: 200 (SUCCESS!)")
                     return await response.json()

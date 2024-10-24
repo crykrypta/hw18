@@ -4,7 +4,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from typing import List, Dict
+from typing import List
 
 from bot.lexicon import lexicon
 from bot.keyboards import chat_keyboard, requests_limit_keyboard
@@ -77,7 +77,7 @@ async def chat_process(message: Message, state: FSMContext):
         # ---------------------- FAST API ----------------------|
 
         # Получем класс ChatGPTClient для взаимодействия с нашим API
-        client: Dict = LLMSClient(base_url=config.fastapi_url)
+        client = LLMSClient(base_url=config.fastapi_url)
 
         try:
             response = await client.fetch_gigachat_answer(

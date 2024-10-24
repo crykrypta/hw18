@@ -86,6 +86,10 @@ class GigaChatModel:
     def __init__(self, token: str):
         self.model = GigaChat(credentials=token,
                               verify_ssl_certs=False)
+        # Определяем необходимость Default System Prompt
+        self.system = 'Ты - нейроконсультант, пользователь ' \
+                        'взаимодействует с тобой через Telegram\n' \
+                        'Если контекст диалога не пустой, не привествуй пользователя' # noqa
 
     # Функция получения ответа от GigaChat
     async def get_answer(self,

@@ -50,7 +50,7 @@ async def query_to_chatgpt(query: Query):
 async def query_to_gigachat(query: Query):
     logger.debug('ENDPOINT: /sber/gigachat/query')
     try:
-        response = gigachat.get_answer(
+        response = await gigachat.get_answer(
             topic=query.topic,
             username=query.username,
             dialog_context=query.dialog
