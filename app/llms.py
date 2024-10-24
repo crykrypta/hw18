@@ -114,7 +114,7 @@ class GigaChatModel:
             HumanMessage(content=user_message)
         ]
         try:
-            response = self.model(messages=messages)
+            response = await self.model.ainvoke(input=messages)
             logger.info('Ответ от GigaChat получен (SUCCESS)')
         except Exception as e:
             logger.error('Ошибка при получении ответа от GigaChat: %s', e)

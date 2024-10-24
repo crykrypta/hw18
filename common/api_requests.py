@@ -15,7 +15,7 @@ class LLMSClient:
             base_url (str): 127.0.0.1:port
             session (ClientSession): aiohttp сессия
         """
-        logger.info('Инициализирован клиент ChatGPTClient')
+        logger.info('Инициализирован клиент LLMSClient')
         self.base_url = base_url
         self.session = session or aiohttp.ClientSession()
 
