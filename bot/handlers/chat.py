@@ -56,6 +56,7 @@ async def chat_process(message: Message, state: FSMContext):
 
         # ПОЛУЧАЕМ КОЛИЧЕСТВО ЗАПРОСОВ
         limit_reached = await handle_user_requests_limit(
+            session=session,
             user=user, state=state,
             generating_msg=generating_msg,
             rq_limit=MAX_REQUESTS_PER_DAY

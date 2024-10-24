@@ -262,7 +262,7 @@ async def send_limit_exceeded_message(user, generating_msg) -> None:
         logger.error('Ошибка при отправке сообщения пользователю: %s', e)
 
 
-async def handle_user_requests_limit(user, state, generating_msg, rq_limit):
+async def handle_user_requests_limit(session, user, state, generating_msg, rq_limit): # noqa
     """Логика, при исчерпывании лимита запросов
 
     Args:
@@ -275,9 +275,12 @@ async def handle_user_requests_limit(user, state, generating_msg, rq_limit):
     Returns:
         bool
     """
+
     if user.request_count > rq_limit:
         logger.warning('Превышено количество запросов пользователя: %s', user.id) # noqa
         await set_chat_state(state, Chat.requests_limit)
         await send_limit_exceeded_message(user, generating_msg)
         return True
-    return False
+    else:  # Если запросы еще есть увеличиваем счетчик + 1
+        await increment_user_request_count(session=session, user_id=user.id)
+        return False
