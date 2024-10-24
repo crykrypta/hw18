@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def message_and_requests(message: str,
@@ -14,6 +14,8 @@ def message_and_requests(message: str,
     Returns:
         Осталось запросов: {request_count}\n\n{message}
     """
+    logger.info('Формируем сообщение для пользователя..')
+
     return f'Осталось запросов: {limit-request_count}\n\n{message}'
 
 
