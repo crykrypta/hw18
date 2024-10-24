@@ -92,7 +92,11 @@ class LLMSClient:
             async with self.session.post(url=url, json=payload) as response:
                 if response.status == 200:
                     logger.info("FastAPI: 200 (SUCCESS!)")
-                    return await response.json()
+                    try:
+                        return await response.json()
+                    except Exception as e:
+                        logger.error('Ошибка при -> return response.json(): %s', e) # noqa
+                        return None
                 else:
                     logger.error(f"FastAPI Error: {response.status}") # noqa
                     return None
