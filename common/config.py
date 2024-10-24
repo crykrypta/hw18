@@ -6,6 +6,11 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class Gigachat:
+    auth: str
+
+
+@dataclass
 class RedisConfig:
     host: str
     port: int
@@ -19,6 +24,7 @@ class Config:
     proxy: str
     fastapi_url: str
     redis: RedisConfig
+    gigachat: Gigachat
 
 
 def load_config() -> Config:
@@ -31,7 +37,8 @@ def load_config() -> Config:
                   proxy=env.str('PROXY'),
                   fastapi_url=env.str('FASTAPI_URL'),
                   redis=RedisConfig(host=env.str('REDIS_HOST'),
-                                    port=env.int('REDIS_PORT')))
+                                    port=env.int('REDIS_PORT')),
+                  gigachat=Gigachat(auth=env.str('GIGACHAT_AUTH')))
 
 
 logger.info('Configuration loaded!')
