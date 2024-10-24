@@ -1,5 +1,8 @@
 import logging
 
+from bot.lexicon import lexicon
+from bot.keyboards import requests_limit_keyboard
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,3 +63,20 @@ async def answer_and_remove_keyboard(bot, message, state, text):
 
     # Сохраняем идентификатор текущего сообщения в состоянии
     await state.update_data(last_bot_message_id=generating_msg.message_id)
+
+
+async def send_limit_exceeded_message(user: User, generating_msg: Message) -> None: # noqa
+    """Функция отправки сообщения о том, что лимит запросов исчерпан
+
+    Args:
+        user (User): Обьект пользователя User
+        generating_msg (message): Редактируемое сообщение
+    """
+    try:
+        await generating_msg.edit_text(
+            text=lexicon[user.language]['error']['requests_limit'],
+            reply_markup=requests_limit_keyboard(user.language)
+        )
+        logger.warning('Отправлено сообщение о превышении лимита запросов')
+    except Exception as e:
+        logger.error('Ошибка при отправке сообщения пользователю: %s', e)

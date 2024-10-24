@@ -8,16 +8,15 @@ from sqlalchemy import func, update
 from sqlalchemy.future import select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 
-from bot.keyboards import requests_limit_keyboard
+from bot.handlers.utils import send_limit_exceeded_message
 
 from common.db.models import User, DialogContext
 
 from bot.handlers import utils
 from bot.states import Chat
-from bot.lexicon import lexicon
 
 
-from bot.exc import UserRequestError, RequestsLimitError
+from bot.exc import UserRequestError
 
 
 logger = logging.getLogger(__name__)
@@ -201,65 +200,6 @@ async def reset_user_request_count(session: AsyncSession, user_id: int):
         await session.refresh(user)
     else:
         logger.error(f'Пользователь {user_id} не найден')
-
-
-async def handle_user_request(session, user, max_requests) -> List[str] | str | None: # noqa
-    # Увеличиваем счетчик запросов пользователя
-    try:
-        await increment_user_request_count(session=session, user_id=user.id)
-        logger.info('Счетчик запросов увеличен')
-    except Exception as e:
-        logger.error('Ошибка при увеличении счетчика запросов: %s', e)
-        raise UserRequestError('Ошибка при увеличении счетчика запросов')
-
-    # Проверяем количество запросов пользователя
-    if user.request_count > max_requests:
-        logger.warning('Превышено максимальное количество запросов для user: %d', user.id) # noqa
-        raise RequestsLimitError('Превышено максимальное количество запросов')
-
-    try:  # Получаем контекст диалога пользователя
-        logger.info('Получаем контекст диалога...')
-        context = await session.scalars(
-            select(DialogContext.context)
-            .where(DialogContext.user_id == user.id)
-            .order_by(DialogContext.timestamp.desc())
-        )
-        await session.commit()
-        return context
-        logger.info('Dialog context received (SUCESS)')
-
-    except Exception as e:
-        logger.error('Ошибка при получении контекста диалога: %s', e)
-        raise UserRequestError('Ошибка при получении контекста диалога')
-
-
-# async def set_chat_state(state, state_value):
-#     """Изменяет состояние state на state_value + логирует
-#     Args:
-#         state (FSMContext): state: FSMContext текущего обработчика
-#         state_value (State()): Конечное состояние"""
-
-#     try:
-#         await state.set_state(state_value)
-#     except Exception as e:
-#         logger.error('Ошибка при установке состояния: %s', e)
-
-
-async def send_limit_exceeded_message(user, generating_msg) -> None:
-    """Функция отправки сообщения о том, что лимит запросов исчерпан
-
-    Args:
-        user (User): Обьект пользователя User
-        generating_msg (message): Редактируемое сообщение
-    """
-    try:
-        await generating_msg.edit_text(
-            text=lexicon[user.language]['error']['requests_limit'],
-            reply_markup=requests_limit_keyboard(user.language)
-        )
-        logger.warning('Отправлено сообщение о превышении лимита запросов')
-    except Exception as e:
-        logger.error('Ошибка при отправке сообщения пользователю: %s', e)
 
 
 async def handle_user_requests_limit(session, user, state, generating_msg, rq_limit): # noqa
