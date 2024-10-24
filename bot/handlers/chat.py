@@ -12,13 +12,15 @@ from bot.states import Chat
 from bot.handlers import utils
 
 from common.config import load_config
+
 from common.db.models import User
 from common.db.database import get_session
-from common.api_requests import ChatGPTClient
 from common.db.requests import (get_user_by_tg_id,
                                 get_user_dialog_context,
                                 add_dialog_context,
                                 handle_user_requests_limit)
+
+from common.api_requests import LLMSClient
 
 
 logger = logging.getLogger(__name__)
@@ -75,10 +77,10 @@ async def chat_process(message: Message, state: FSMContext):
         # ---------------------- FAST API ----------------------|
 
         # Получем класс ChatGPTClient для взаимодействия с нашим API
-        client: Dict = ChatGPTClient(base_url=config.fastapi_url)
+        client: Dict = LLMSClient(base_url=config.fastapi_url)
 
         try:
-            response = await client.fetch_model_answer(
+            response = await client.fetch_gigachat_answer(
                 topic=message.text,
                 username=user.name,
                 dialog=context

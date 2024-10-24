@@ -6,7 +6,7 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
-class ChatGPTClient:
+class LLMSClient:
     def __init__(self,
                  base_url: str,
                  session: Optional[aiohttp.ClientSession] = None):
@@ -15,7 +15,7 @@ class ChatGPTClient:
             base_url (str): 127.0.0.1:port
             session (ClientSession): aiohttp сессия
         """
-        logger.info('Инициализирован клиент %s', __name__)
+        logger.info('Инициализирован клиент ChatGPTClient')
         self.base_url = base_url
         self.session = session or aiohttp.ClientSession()
 
@@ -42,18 +42,15 @@ class ChatGPTClient:
             'dialog': dialog  # Добавляем историю диалога
         }
 
-    async def fetch_model_answer(self,
-                                 topic: str,
-                                 username: str,
-                                 dialog: List[str]):
-        """
-        Отправляет запрос к ChatGPT через FastAPI-сервис, возвращает ответ
+    async def fetch_chatgpt_answer(self, topic: str, username: str, dialog: List[str]): # noqa
+        """Отправляет запрос к ChatGPT через FastAPI-сервис
         args:
             topic (str) - текст сообщения
             username (str) - имя пользователя
             dialog (List[str]) - последние 5 сообщений диалога
         returns:
             answer (dict) - ответ от ChatGPT"""
+        logger.info('Начало работы функции fetch_model_answer')
         try:
             # Выполняем асинхронный POST запрос
             async with self.session.post(
@@ -66,6 +63,36 @@ class ChatGPTClient:
                     return await response.json()
                 else:
                     logger.error(f"ОШИБКА ЗАПРОСА API Error: {response.status}") # noqa
+                    return None
+
+        except aiohttp.ClientError as e:
+            logger.error('Ошибка запроса: %s', e)
+            return None
+        except Exception as e:
+            logger.error('Произошла ошибка: %s', e)
+
+    async def fetch_gigachat_answer(self, topic: str, username: str, dialog: List[str]): # noqa
+        """Отправляет запрос к GigaChat через FastAPI-сервис
+        args:
+            topic (str) - текст сообщения
+            username (str) - имя пользователя
+            dialog (List[str]) - последние 5 сообщений диалога
+        returns:
+            answer (dict) - ответ от ChatGPT"""
+
+        try:
+            logger.info('Начало работы функции fetch_model_answer')
+            # Выполняем асинхронный POST запрос
+            async with self.session.post(
+                url=f'{self.base_url}/sber/gigachat/query',
+                json=self.build_json_payload(topic, username, dialog)
+            ) as response:
+
+                if response.status == 200:
+                    logger.info("FastAPI: 200 (SUCCESS!)")
+                    return await response.json()
+                else:
+                    logger.error(f"FastAPI Error: {response.status}") # noqa
                     return None
 
         except aiohttp.ClientError as e:
