@@ -233,16 +233,16 @@ async def handle_user_request(session, user, max_requests) -> List[str] | str | 
         raise UserRequestError('Ошибка при получении контекста диалога')
 
 
-async def set_chat_state(state, state_value):
-    """Изменяет состояние state на state_value + логирует
-    Args:
-        state (FSMContext): state: FSMContext текущего обработчика
-        state_value (State()): Конечное состояние"""
+# async def set_chat_state(state, state_value):
+#     """Изменяет состояние state на state_value + логирует
+#     Args:
+#         state (FSMContext): state: FSMContext текущего обработчика
+#         state_value (State()): Конечное состояние"""
 
-    try:
-        await state.set_state(state_value)
-    except Exception as e:
-        logger.error('Ошибка при установке состояния: %s', e)
+#     try:
+#         await state.set_state(state_value)
+#     except Exception as e:
+#         logger.error('Ошибка при установке состояния: %s', e)
 
 
 async def send_limit_exceeded_message(user, generating_msg) -> None:
@@ -278,7 +278,7 @@ async def handle_user_requests_limit(session, user, state, generating_msg, rq_li
 
     if user.request_count >= rq_limit:
         logger.warning('Превышено количество запросов пользователя: %s', user.id) # noqa
-        await set_chat_state(state, Chat.requests_limit)
+        await state.set_state(Chat.requests_limit)
         await send_limit_exceeded_message(user, generating_msg)
         return True
     else:  # Если запросы еще есть увеличиваем счетчик + 1
